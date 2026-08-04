@@ -1,0 +1,54 @@
+package com.thanaphat2005.food.ordering.system;
+
+
+import com.thanaphat2005.food.ordering.system.order.service.domain.OrderDomainService;
+import com.thanaphat2005.food.ordering.system.order.service.domain.OrderDomainServiceImpl;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.message.publisher.payment.OrderCreatedPaymentRequestMessagePublisher;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.message.publisher.restaurantapproval.OrderPaidRestaurantRequestMessagePublisher;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.CustomerRepository;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.OrderRepository;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.RestaurantRepository;
+import org.mockito.Mockito;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication(scanBasePackages = "com.thanaphat2005.food.ordering.system")
+public class OrderTestConfigure {
+
+
+    @Bean
+    public OrderCreatedPaymentRequestMessagePublisher orderCreatedPaymentRequestMessagePublisher(){
+        return Mockito.mock(OrderCreatedPaymentRequestMessagePublisher.class);
+    }
+
+    @Bean
+    public OrderPaidRestaurantRequestMessagePublisher orderPaidRestaurantRequestMessagePublisher(){
+        return Mockito.mock(OrderPaidRestaurantRequestMessagePublisher.class);
+    }
+
+    @Bean
+    public OrderCancelledPaymentRequestMessagePublisher orderCancelledPaymentRequestMessagePublisher(){
+        return Mockito.mock(OrderCancelledPaymentRequestMessagePublisher.class);
+    }
+
+    @Bean
+    public OrderRepository orderRepository(){
+        return Mockito.mock(OrderRepository.class);
+    }
+
+    @Bean
+    public CustomerRepository customerRepository(){
+        return Mockito.mock(CustomerRepository.class);
+    }
+
+    @Bean
+    public RestaurantRepository restaurantRepository(){
+        return Mockito.mock(RestaurantRepository.class);
+    }
+
+    @Bean
+    public OrderDomainService orderDomainService(){
+        return new OrderDomainServiceImpl();
+    }
+}
