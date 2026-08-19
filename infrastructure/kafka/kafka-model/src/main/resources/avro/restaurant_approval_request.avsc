@@ -1,0 +1,61 @@
+{
+    "namespace": "com.thanaphat2005.food.ordering.system.kafka.order.avro.model",
+    "type": "record",
+    "name": "RestaurantApprovalRequestAvroModel",
+    "fields": [
+        {
+            "name": "id",
+            "type": "string"
+        },
+        {
+            "name": "sagaId",
+            "type": "string"
+        },
+        {
+            "name": "restaurantId",
+            "type": "string"
+        },
+        {
+            "name": "orderId",
+            "type": "string"
+        },
+        {
+            "name": "restaurantOrderStatus",
+            "type": {
+                "type": "enum",
+                "name": "RestaurantOrderStatus",
+                "symbols": ["PAID"]
+            }
+        },
+        {
+            "name": "products",
+            "type": {
+                "type": "array",
+                "items": {
+                    "name": "Product",
+                    "type": "record",
+                    "fields": [
+                        {"name": "id", "type": "string"},
+                        {"name": "quantity", "type": "int"}
+                    ]
+                }
+            }
+        },
+        {
+            "name": "price",
+            "type": {
+                "type": "bytes",
+                "logicalType": "decimal",
+                "precision": 10,
+                "scale": 2
+            }
+        },
+        {
+            "name": "createdAt",
+            "type": {
+                "type": "long",
+                "logicalType": "timestamp-millis"
+            }
+        }
+    ]
+}

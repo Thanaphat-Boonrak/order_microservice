@@ -13,6 +13,7 @@ import com.thanaphat2005.food.ordering.system.order.service.dto.create.OrderAddr
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.OrderItem;
 import com.thanaphat2005.food.ordering.system.order.service.mapper.OrderDataMapper;
 import com.thanaphat2005.food.ordering.system.order.service.ports.input.service.OrderApplicationService;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.ai.order.noteinterpreter.OrderNoteInterpreter;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.CustomerRepository;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.OrderRepository;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.RestaurantRepository;
@@ -51,6 +52,10 @@ public class OrderApplicationServiceTest {
     @Autowired
     private CustomerRepository customerRepository;
 
+
+    @Autowired
+    private OrderNoteInterpreter orderNoteInterpreter;
+
     private CreateOrderCommand createOrderCommand;
     private CreateOrderCommand createOrderCommandWrongPrice;
     private CreateOrderCommand createOrderCommandWrongProductPrice;
@@ -59,6 +64,7 @@ public class OrderApplicationServiceTest {
     private final UUID PRODUCT_ID = UUID.fromString("d215b5f8-0249-4dc5-89a3-51fd148cfb48");
     private final UUID ORDER_ID = UUID.fromString("15a497c1-0f4b-4eff-b9f4-c402c8c07afb");
     private final BigDecimal PRICE = new BigDecimal("200.00");
+    private final String orderNotes = "no onions , with pickles , extra no spicy. Leave at the door.";
 
     @BeforeAll
     public void init() {
@@ -83,6 +89,7 @@ public class OrderApplicationServiceTest {
                                 .price(new BigDecimal("50.00"))
                                 .subTotal(new BigDecimal("150.00"))
                                 .build()))
+                .orderNotes(orderNotes)
                 .build();
 
         createOrderCommandWrongPrice = CreateOrderCommand.builder()
@@ -133,7 +140,8 @@ public class OrderApplicationServiceTest {
 
         Customer customer = new Customer();
         customer.setId(new CustomerId(CUSTOMER_ID));
-
+        OrderPreferences orderPreferences = OrderPreferences.builder().addIngredients(List.of("pickle")).spiceLevel(SpiceLevel.MEDIUM)
+                .deliveryInstructions("Leave at the door").build();
         Restaurant restaurantResponse = Restaurant.builder()
                 .restaurantId(new RestaurantId(createOrderCommand.getRestaurantId()))
                 .products(List.of(new Product(new ProductId(PRODUCT_ID),
@@ -145,14 +153,16 @@ public class OrderApplicationServiceTest {
 
         Order order = orderDataMapper.createOrderCommandToOrder(createOrderCommand);
         order.setId(new OrderId(ORDER_ID));
+        order.updateOrderPreferences(orderPreferences);
         when(customerRepository.findCustomer(CUSTOMER_ID)).thenReturn(Optional.of(customer));
         when(restaurantRepository.findRestaurantInformation(orderDataMapper.createOrderCommandToRestaurant(createOrderCommand))).thenReturn(Optional.of(restaurantResponse));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(orderNoteInterpreter.interpret(orderNotes)).thenReturn(orderPreferences);
     }
 
 
     @Test
-    public void testCreateOrder(){
+    public void testCreateOrder() {
         CreateOrderResponse createOrderResponse = orderApplicationService.createOrder(createOrderCommand);
         assertEquals(OrderStatus.PENDING, createOrderResponse.getOrderStatus());
         assertEquals("Order created Successfully", createOrderResponse.getMessage());

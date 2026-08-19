@@ -3,6 +3,7 @@ package com.thanaphat2005.food.ordering.system;
 
 import com.thanaphat2005.food.ordering.system.order.service.domain.OrderDomainService;
 import com.thanaphat2005.food.ordering.system.order.service.domain.OrderDomainServiceImpl;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.ai.order.noteinterpreter.OrderNoteInterpreter;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.message.publisher.payment.OrderCreatedPaymentRequestMessagePublisher;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.message.publisher.restaurantapproval.OrderPaidRestaurantRequestMessagePublisher;
@@ -50,5 +51,11 @@ public class OrderTestConfigure {
     @Bean
     public OrderDomainService orderDomainService(){
         return new OrderDomainServiceImpl();
+    }
+
+
+    @Bean
+    public OrderNoteInterpreter orderNoteInterpreter(){
+        return Mockito.mock(OrderNoteInterpreter.class);
     }
 }

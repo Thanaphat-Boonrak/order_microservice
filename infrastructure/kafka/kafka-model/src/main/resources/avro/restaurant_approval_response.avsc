@@ -1,0 +1,45 @@
+{
+    "namespace": "com.thanaphat2005.food.ordering.system.kafka.order.avro.model",
+    "type": "record",
+    "name": "RestaurantApprovalResponseAvroModel",
+    "fields": [
+        {
+            "name": "id",
+            "type": "string"
+        },
+        {
+            "name": "sagaId",
+            "type": "string"
+        },
+        {
+            "name": "restaurantId",
+            "type": "string"
+        },
+        {
+            "name": "orderId",
+            "type": "string"
+        },
+        {
+            "name": "createdAt",
+            "type": {
+                "type": "long",
+                "logicalType": "timestamp-millis"
+            }
+        },
+        {
+            "name": "orderApprovalStatus",
+            "type": {
+                "type": "enum",
+                "name": "OrderApprovalStatus",
+                "symbols": ["APPROVED", "REJECTED"]
+            }
+        },
+        {
+            "name": "failureMessages",
+            "type": {
+                "type": "array",
+                "items": "string"
+            }
+        }
+    ]
+}

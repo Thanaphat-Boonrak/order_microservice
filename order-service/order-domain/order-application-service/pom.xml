@@ -17,6 +17,10 @@
     <dependencies>
         <dependency>
             <groupId>com.thanaphat2005.food.ordering.system</groupId>
+            <artifactId>saga</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.thanaphat2005.food.ordering.system</groupId>
             <artifactId>order-domain-core</artifactId>
         </dependency>
         <dependency>
