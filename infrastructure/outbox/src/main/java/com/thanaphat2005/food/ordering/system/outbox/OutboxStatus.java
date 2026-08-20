@@ -1,4 +1,5 @@
 package com.thanaphat2005.food.ordering.system.outbox;
 
-public enum OutBoxStatus {
+public enum OutboxStatus {
+    STARTED,COMPLETED,FAILED
 }

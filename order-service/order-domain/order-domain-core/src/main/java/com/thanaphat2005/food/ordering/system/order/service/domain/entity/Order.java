@@ -86,11 +86,12 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
 
-    public void cancel(){
+    public void cancel(List<String> failureMessages){
         if(!(orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.CANCELLING)){
             throw new DomainException("Order is not in correct state for cancelled operation");
         }
         orderStatus = OrderStatus.CANCELLED;
+        updateFailureMessage(failureMessages);
     }
 
     public void updateOrderPreferences(OrderPreferences orderPreferences){
