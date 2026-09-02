@@ -2,7 +2,7 @@ package com.thanaphat2005.food.ordering.system.restaurant.service.dataaccess.res
 
 import com.thanaphat2005.food.ordering.system.dataaccess.restaurant.entity.RestaurantEntity;
 import com.thanaphat2005.food.ordering.system.dataaccess.restaurant.repository.RestaurantJpaRepository;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.Restaurant;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.Restaurant;
 import com.thanaphat2005.food.ordering.system.restaurant.service.dataaccess.restaurant.mapper.RestaurantDataAccessMapper;
 import com.thanaphat2005.food.ordering.system.restaurant.service.ports.output.repository.RestaurantRepository;
 import org.springframework.stereotype.Component;

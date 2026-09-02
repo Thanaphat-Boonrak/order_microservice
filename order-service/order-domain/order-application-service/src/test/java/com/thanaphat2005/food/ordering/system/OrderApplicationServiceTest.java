@@ -12,22 +12,30 @@ import com.thanaphat2005.food.ordering.system.order.service.dto.create.CreateOrd
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.OrderAddress;
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.OrderItem;
 import com.thanaphat2005.food.ordering.system.order.service.mapper.OrderDataMapper;
+import com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment.OrderPaymentEventPayload;
+import com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment.OrderPaymentOutboxMessage;
 import com.thanaphat2005.food.ordering.system.order.service.ports.input.service.OrderApplicationService;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.ai.order.noteinterpreter.OrderNoteInterpreter;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.CustomerRepository;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.OrderRepository;
+import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.PaymentOutboxRepository;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.RestaurantRepository;
+import com.thanaphat2005.food.ordering.system.outbox.OutboxStatus;
+import com.thanaphat2005.food.ordering.system.saga.SagaStatus;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.thanaphat2005.food.ordering.system.saga.order.SagaConstants.ORDER_SAGA_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -54,6 +62,9 @@ public class OrderApplicationServiceTest {
 
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private OrderNoteInterpreter orderNoteInterpreter;
 
     private CreateOrderCommand createOrderCommand;
@@ -64,7 +75,10 @@ public class OrderApplicationServiceTest {
     private final UUID PRODUCT_ID = UUID.fromString("d215b5f8-0249-4dc5-89a3-51fd148cfb48");
     private final UUID ORDER_ID = UUID.fromString("15a497c1-0f4b-4eff-b9f4-c402c8c07afb");
     private final BigDecimal PRICE = new BigDecimal("200.00");
+    private final UUID SAGA_ID = UUID.fromString("15a497c1-0f4b-4eff-b9f4-c402c8c07afa");
     private final String orderNotes = "no onions , with pickles , extra no spicy. Leave at the door.";
+    @Autowired
+    private PaymentOutboxRepository paymentOutboxRepository;
 
     @BeforeAll
     public void init() {
@@ -138,8 +152,7 @@ public class OrderApplicationServiceTest {
                                 .build()))
                 .build();
 
-        Customer customer = new Customer();
-        customer.setId(new CustomerId(CUSTOMER_ID));
+        Customer customer = new Customer(new CustomerId(CUSTOMER_ID));
         OrderPreferences orderPreferences = OrderPreferences.builder().addIngredients(List.of("pickle")).spiceLevel(SpiceLevel.MEDIUM)
                 .deliveryInstructions("Leave at the door").build();
         Restaurant restaurantResponse = Restaurant.builder()
@@ -158,6 +171,7 @@ public class OrderApplicationServiceTest {
         when(restaurantRepository.findRestaurantInformation(orderDataMapper.createOrderCommandToRestaurant(createOrderCommand))).thenReturn(Optional.of(restaurantResponse));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(orderNoteInterpreter.interpret(orderNotes)).thenReturn(orderPreferences);
+        when(paymentOutboxRepository.save((any(OrderPaymentOutboxMessage.class)))).thenReturn(getOrderPaymentOutboxMessage());
     }
 
 
@@ -202,5 +216,31 @@ public class OrderApplicationServiceTest {
 
         assertEquals(orderDomainException.getMessage(),
                 "Restaurant with id " + RESTAURANT_ID + " is currently not active!");
+    }
+
+    private OrderPaymentOutboxMessage getOrderPaymentOutboxMessage() {
+        OrderPaymentEventPayload orderPaymentEventPayload = OrderPaymentEventPayload.builder()
+                .orderId(ORDER_ID.toString())
+                .customerId(CUSTOMER_ID.toString())
+                .price(PRICE)
+                .createdAt(ZonedDateTime.now())
+                .paymentOrderStatus(PaymentOrderStatus.PENDING.name())
+                .build();
+
+        return OrderPaymentOutboxMessage.builder()
+                .id(UUID.randomUUID())
+                .sagaId(SAGA_ID)
+                .createdAt(ZonedDateTime.now())
+                .type(ORDER_SAGA_NAME)
+                .payload(createPayload(orderPaymentEventPayload))
+                .orderStatus(OrderStatus.PENDING)
+                .sagaStatus(SagaStatus.STARTED)
+                .outboxStatus(OutboxStatus.STARTED)
+                .version(0)
+                .build();
+    }
+
+    private String createPayload(OrderPaymentEventPayload orderPaymentEventPayload) {
+        return objectMapper.writeValueAsString(orderPaymentEventPayload);
     }
 }

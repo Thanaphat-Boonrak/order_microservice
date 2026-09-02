@@ -1,17 +1,16 @@
 package com.thanaphat2005.food.ordering.system.payment.service.domain;
 
-import com.thanaphat2005.food.ordering.system.domain.event.publisher.DomainEventPublisher;
 import com.thanaphat2005.food.ordering.system.domain.valueobject.Money;
 import com.thanaphat2005.food.ordering.system.domain.valueobject.PaymentStatus;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.CreditEntry;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.CreditHistory;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.Payment;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.event.PaymentCancelledEvent;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.event.PaymentCompletedEvent;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.event.PaymentEvent;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.event.PaymentFailedEvent;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.valueobject.CreditHistoryId;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.valueobject.TransactionType;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.CreditEntry;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.CreditHistory;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.Payment;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.event.PaymentCancelledEvent;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.event.PaymentCompletedEvent;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.event.PaymentEvent;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.event.PaymentFailedEvent;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.valueobject.CreditHistoryId;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.valueobject.TransactionType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.ZoneId;
@@ -27,9 +26,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             Payment payment,
             CreditEntry creditEntry,
             List<CreditHistory> creditHistories,
-            List<String> failureMessages,
-            DomainEventPublisher<PaymentCompletedEvent> paymentCompleteEventDomainEventPublisher,
-            DomainEventPublisher<PaymentFailedEvent> paymentFailedEventDomainEventPublisher) {
+            List<String> failureMessages) {
 
         payment.validatePayment(failureMessages);
         payment.initializePayment();
@@ -43,12 +40,12 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             updateCreditHistory(payment, creditHistories, TransactionType.DEBIT);
             payment.updateStatus(PaymentStatus.COMPLETED);
 
-            return new PaymentCompletedEvent(payment, ZonedDateTime.now(ZoneId.of("UTC")), paymentCompleteEventDomainEventPublisher);
+            return new PaymentCompletedEvent(payment, ZonedDateTime.now(ZoneId.of("UTC")));
         } else {
             log.info("Payment initiation failed for order id: {}", payment.getId().getValue());
             payment.updateStatus(PaymentStatus.FAILED);
 
-            return new PaymentFailedEvent(payment, ZonedDateTime.now(ZoneId.of("UTC")), failureMessages, paymentFailedEventDomainEventPublisher);
+            return new PaymentFailedEvent(payment, ZonedDateTime.now(ZoneId.of("UTC")), failureMessages);
         }
     }
 
@@ -57,9 +54,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             Payment payment,
             CreditEntry creditEntry,
             List<CreditHistory> creditHistories,
-            List<String> failureMessages,
-            DomainEventPublisher<PaymentCancelledEvent> paymentCancelledEventDomainEventPublisher,
-            DomainEventPublisher<PaymentFailedEvent> paymentFailedEventDomainEventPublisher) {
+            List<String> failureMessages) {
 
         payment.validatePayment(failureMessages);
         validateCreditHistory(creditEntry, creditHistories, failureMessages);
@@ -70,12 +65,12 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             updateCreditHistory(payment, creditHistories, TransactionType.CREDIT);
             payment.updateStatus(PaymentStatus.CANCELLED);
 
-            return new PaymentCancelledEvent(payment, ZonedDateTime.now(ZoneId.of("UTC")), paymentCancelledEventDomainEventPublisher);
+            return new PaymentCancelledEvent(payment, ZonedDateTime.now(ZoneId.of("UTC")));
         } else {
             log.info("Payment cancellation failed for order id: {}", payment.getId().getValue());
             payment.updateStatus(PaymentStatus.FAILED);
 
-            return new PaymentFailedEvent(payment, ZonedDateTime.now(ZoneId.of("UTC")), failureMessages, paymentFailedEventDomainEventPublisher);
+            return new PaymentFailedEvent(payment, ZonedDateTime.now(ZoneId.of("UTC")), failureMessages);
         }
     }
 

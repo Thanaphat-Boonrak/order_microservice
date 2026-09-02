@@ -20,6 +20,14 @@
             <groupId>com.thanaphat2005.food.ordering.system</groupId>
             <artifactId>common-dataaccess</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.thanaphat2005.food.ordering.system</groupId>
+            <artifactId>outbox</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.thanaphat2005.food.ordering.system</groupId>
+            <artifactId>saga</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

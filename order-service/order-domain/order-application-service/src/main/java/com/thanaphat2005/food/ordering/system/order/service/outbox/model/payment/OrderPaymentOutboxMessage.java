@@ -20,6 +20,7 @@ public class OrderPaymentOutboxMessage {
     private ZonedDateTime createdAt;
     private ZonedDateTime processedAt;
     private String type;
+    private String payload;
     private SagaStatus sagaStatus;
     private OrderStatus  orderStatus;
     private OutboxStatus outboxStatus;
@@ -39,5 +40,10 @@ public class OrderPaymentOutboxMessage {
 
     public void setProcessedAt(ZonedDateTime processedAt) {
         this.processedAt = processedAt;
+    }
+
+
+    public String getPayload() {
+        return payload;
     }
 }

@@ -2,7 +2,7 @@ package com.thanaphat2005.food.ordering.system.restaurant.service.dto;
 
 
 import com.thanaphat2005.food.ordering.system.domain.valueobject.RestaurantOrderStatus;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.Product;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.Product;
 import lombok.Builder;
 import lombok.Getter;
 

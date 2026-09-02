@@ -3,7 +3,7 @@ package com.thanaphat2005.food.ordering.system.payment.service.dataacess.credite
 import com.thanaphat2005.food.ordering.system.domain.valueobject.CustomerId;
 import com.thanaphat2005.food.ordering.system.payment.service.dataacess.creditentry.mapper.CreditEntryDataAccessMapper;
 import com.thanaphat2005.food.ordering.system.payment.service.dataacess.creditentry.repository.CreditEntryJpaRepository;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.CreditEntry;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.CreditEntry;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.output.repository.CreditEntryRepository;
 import org.springframework.stereotype.Component;
 

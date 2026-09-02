@@ -1,22 +1,24 @@
 package com.thanaphat2005.food.ordering.system.order.service.mapper;
 
-import com.thanaphat2005.food.ordering.system.domain.valueobject.CustomerId;
-import com.thanaphat2005.food.ordering.system.domain.valueobject.Money;
-import com.thanaphat2005.food.ordering.system.domain.valueobject.ProductId;
-import com.thanaphat2005.food.ordering.system.domain.valueobject.RestaurantId;
-import com.thanaphat2005.food.ordering.system.order.service.domain.entity.Order;
-import com.thanaphat2005.food.ordering.system.order.service.domain.entity.OrderItem;
-import com.thanaphat2005.food.ordering.system.order.service.domain.entity.Product;
-import com.thanaphat2005.food.ordering.system.order.service.domain.entity.Restaurant;
+import com.thanaphat2005.food.ordering.system.domain.valueobject.*;
+import com.thanaphat2005.food.ordering.system.order.service.domain.entity.*;
+import com.thanaphat2005.food.ordering.system.order.service.domain.event.OrderCancelledEvent;
+import com.thanaphat2005.food.ordering.system.order.service.domain.event.OrderCreatedEvent;
+import com.thanaphat2005.food.ordering.system.order.service.domain.event.OrderPaidEvent;
 import com.thanaphat2005.food.ordering.system.order.service.domain.valueobject.StreetAddress;
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.CreateOrderCommand;
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.CreateOrderResponse;
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.OrderAddress;
+import com.thanaphat2005.food.ordering.system.order.service.dto.message.CustomerModel;
 import com.thanaphat2005.food.ordering.system.order.service.dto.track.TrackOrderResponse;
+import com.thanaphat2005.food.ordering.system.order.service.outbox.model.approval.OrderApprovalEventPayload;
+import com.thanaphat2005.food.ordering.system.order.service.outbox.model.approval.OrderApprovalEventProduct;
+import com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment.OrderPaymentEventPayload;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class OrderDataMapper {
@@ -45,6 +47,51 @@ public class OrderDataMapper {
                 .deliveryAddress(orderAddressToStreetAddres(createOrderCommand.getAddress()))
                 .price(new Money(createOrderCommand.getPrice()))
                 .items(orderItemsToOrderItemEntities(createOrderCommand.getItems()))
+                .build();
+    }
+
+    public OrderPaymentEventPayload orderCancelledEventToOrderPaymentEventPayload(OrderCancelledEvent
+                                                                                          orderCancelledEvent) {
+        return OrderPaymentEventPayload.builder()
+                .customerId(orderCancelledEvent.getOrder().getCustomerId().getValue().toString())
+                .orderId(orderCancelledEvent.getOrder().getId().getValue().toString())
+                .price(orderCancelledEvent.getOrder().getPrice().getAmount())
+                .createdAt(orderCancelledEvent.getCreatedAt())
+                .paymentOrderStatus(PaymentOrderStatus.CANCELLED.name())
+                .build();
+    }
+
+
+    public OrderApprovalEventPayload orderPaidEventToOrderApprovalEventPayload(OrderPaidEvent orderPaidEvent) {
+        return OrderApprovalEventPayload.builder()
+                .orderId(orderPaidEvent.getOrder().getId().getValue().toString())
+                .restaurantId(orderPaidEvent.getOrder().getRestaurantId().getValue().toString())
+                .restaurantOrderStatus(RestaurantOrderStatus.PAID.name())
+                .products(orderPaidEvent.getOrder().getItems().stream().map(orderItem ->
+                        OrderApprovalEventProduct.builder()
+                                .id(orderItem.getProduct().getId().getValue().toString())
+                                .quantity(orderItem.getQuantity())
+                                .build()).collect(Collectors.toList()))
+                .price(orderPaidEvent.getOrder().getPrice().getAmount())
+                .createdAt(orderPaidEvent.getCreatedAt())
+                .build();
+    }
+
+
+    public Customer customerModelToCustomer(CustomerModel customerModel) {
+        return new Customer(new CustomerId(UUID.fromString(customerModel.getId())),
+                customerModel.getUsername(),
+                customerModel.getFirstName(),
+                customerModel.getLastName());
+    }
+
+    public OrderPaymentEventPayload orderCreatedEventToOrderPaymentEventPayload(OrderCreatedEvent orderCreatedEvent) {
+        return OrderPaymentEventPayload.builder()
+                .customerId(orderCreatedEvent.getOrder().getCustomerId().getValue().toString())
+                .orderId(orderCreatedEvent.getOrder().getId().getValue().toString())
+                .price(orderCreatedEvent.getOrder().getPrice().getAmount())
+                .createdAt(orderCreatedEvent.getCreatedAt())
+                .paymentOrderStatus(PaymentOrderStatus.PENDING.name())
                 .build();
     }
 

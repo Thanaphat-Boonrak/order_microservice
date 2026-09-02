@@ -2,14 +2,14 @@ package com.thanaphat2005.food.ordering.system.restaurant.service;
 
 
 import com.thanaphat2005.food.ordering.system.domain.valueobject.OrderId;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.RestaurantDomainService;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.Restaurant;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.event.OrderApprovalEvent;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.exception.RestaurantNotFoundException;
+import com.thanaphat2005.food.ordering.system.outbox.OutboxStatus;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.RestaurantDomainService;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.Restaurant;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.event.OrderApprovalEvent;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.exception.RestaurantNotFoundException;
 import com.thanaphat2005.food.ordering.system.restaurant.service.dto.RestaurantApprovalRequest;
 import com.thanaphat2005.food.ordering.system.restaurant.service.mapper.RestaurantDataMapper;
-import com.thanaphat2005.food.ordering.system.restaurant.service.ports.output.message.publisher.OrderApprovedMessagePublisher;
-import com.thanaphat2005.food.ordering.system.restaurant.service.ports.output.message.publisher.OrderRejectedMessagePublisher;
+import com.thanaphat2005.food.ordering.system.restaurant.service.outbox.scheduler.OrderOutboxHelper;
 import com.thanaphat2005.food.ordering.system.restaurant.service.ports.output.repository.OrderApprovalRepository;
 import com.thanaphat2005.food.ordering.system.restaurant.service.ports.output.repository.RestaurantRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -29,32 +29,35 @@ public class RestaurantApprovalRequestHelper {
     private final RestaurantDataMapper restaurantDataMapper;
     private final RestaurantRepository restaurantRepository;
     private final OrderApprovalRepository orderApprovalRepository;
-    private final OrderApprovedMessagePublisher orderApprovedMessagePublisher;
-    private final OrderRejectedMessagePublisher orderRejectedMessagePublisher;
+    private final OrderOutboxHelper orderOutboxHelper;
 
-    public RestaurantApprovalRequestHelper(RestaurantDomainService restaurantDomainService, RestaurantDataMapper restaurantDataMapper, RestaurantRepository restaurantRepository, OrderApprovalRepository orderApprovalRepository, OrderApprovedMessagePublisher orderApprovedMessagePublisher, OrderRejectedMessagePublisher orderRejectedMessagePublisher) {
+
+    public RestaurantApprovalRequestHelper(RestaurantDomainService restaurantDomainService, RestaurantDataMapper restaurantDataMapper, RestaurantRepository restaurantRepository, OrderApprovalRepository orderApprovalRepository, OrderOutboxHelper orderOutboxHelper) {
         this.restaurantDomainService = restaurantDomainService;
         this.restaurantDataMapper = restaurantDataMapper;
         this.restaurantRepository = restaurantRepository;
         this.orderApprovalRepository = orderApprovalRepository;
-        this.orderApprovedMessagePublisher = orderApprovedMessagePublisher;
-        this.orderRejectedMessagePublisher = orderRejectedMessagePublisher;
+        this.orderOutboxHelper = orderOutboxHelper;
     }
 
 
     @Transactional
-    public OrderApprovalEvent persistOrderApproval(RestaurantApprovalRequest restaurantApprovalRequest) {
+    public void persistOrderApproval(RestaurantApprovalRequest restaurantApprovalRequest) {
         log.info("Processing restaurant approval for order id: {}", restaurantApprovalRequest.getOrderId());
         List<String> failureMessages = new ArrayList<>();
         Restaurant restaurant = findRestaurant(restaurantApprovalRequest);
         OrderApprovalEvent orderApprovalEvent =
                 restaurantDomainService.validateOrder(
                         restaurant,
-                        failureMessages,
-                        orderApprovedMessagePublisher,
-                        orderRejectedMessagePublisher);
+                        failureMessages
+                );
         orderApprovalRepository.save(restaurant.getOrderApproval());
-        return orderApprovalEvent;
+        orderOutboxHelper
+                .saveOrderOutboxMessage(restaurantDataMapper.orderApprovalEventToOrderEventPayload(orderApprovalEvent),
+                        orderApprovalEvent.getOrderApproval().getApprovalStatus(),
+                        OutboxStatus.STARTED,
+                        UUID.fromString(restaurantApprovalRequest.getSagaId()));
+
     }
 
     private Restaurant findRestaurant(RestaurantApprovalRequest restaurantApprovalRequest) {

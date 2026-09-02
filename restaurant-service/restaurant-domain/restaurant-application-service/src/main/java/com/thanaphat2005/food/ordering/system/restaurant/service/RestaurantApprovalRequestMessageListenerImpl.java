@@ -1,6 +1,5 @@
 package com.thanaphat2005.food.ordering.system.restaurant.service;
 
-import com.thanaphat2005.food.ordering.system.payment.service.domain.event.OrderApprovalEvent;
 import com.thanaphat2005.food.ordering.system.restaurant.service.dto.RestaurantApprovalRequest;
 import com.thanaphat2005.food.ordering.system.restaurant.service.ports.input.message.listener.RestaurantApprovalRequestMessageListener;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,6 @@ public class RestaurantApprovalRequestMessageListenerImpl implements RestaurantA
 
     @Override
     public void approveOrder(RestaurantApprovalRequest restaurantApprovalRequest) {
-        OrderApprovalEvent approvalEvent = restaurantApprovalRequestHelper.persistOrderApproval(restaurantApprovalRequest);
-        approvalEvent.fire();
+        restaurantApprovalRequestHelper.persistOrderApproval(restaurantApprovalRequest);
     }
 }

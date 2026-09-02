@@ -8,8 +8,4 @@ public final class EmptyEvent implements DomainEvent<Void> {
     private EmptyEvent() {}
 
 
-    @Override
-    public void fire() {
-
-    }
 }

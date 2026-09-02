@@ -2,7 +2,7 @@ package com.thanaphat2005.food.ordering.system.payment.service.dataacess.payment
 
 import com.thanaphat2005.food.ordering.system.payment.service.dataacess.payment.mapper.PaymentDataAccessMapper;
 import com.thanaphat2005.food.ordering.system.payment.service.dataacess.payment.repository.PaymentJpaRepository;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.Payment;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.Payment;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.output.repository.PaymentRepository;
 import org.springframework.stereotype.Component;
 

@@ -3,8 +3,8 @@ package com.thanaphat2005.food.ordering.system.payment.service.dataacess.credith
 import com.thanaphat2005.food.ordering.system.domain.valueobject.CustomerId;
 import com.thanaphat2005.food.ordering.system.domain.valueobject.Money;
 import com.thanaphat2005.food.ordering.system.payment.service.dataacess.credithistory.entity.CreditHistoryEntity;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.CreditHistory;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.valueobject.CreditHistoryId;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.CreditHistory;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.valueobject.CreditHistoryId;
 import org.springframework.stereotype.Component;
 
 @Component

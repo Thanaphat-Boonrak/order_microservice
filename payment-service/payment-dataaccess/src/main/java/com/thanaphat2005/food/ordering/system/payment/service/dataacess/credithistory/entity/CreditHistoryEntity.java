@@ -1,6 +1,6 @@
 package com.thanaphat2005.food.ordering.system.payment.service.dataacess.credithistory.entity;
 
-import com.thanaphat2005.food.ordering.system.payment.service.domain.valueobject.TransactionType;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.valueobject.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
 

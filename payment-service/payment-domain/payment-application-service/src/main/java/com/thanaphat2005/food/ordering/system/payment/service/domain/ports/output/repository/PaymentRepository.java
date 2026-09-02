@@ -1,6 +1,6 @@
 package com.thanaphat2005.food.ordering.system.payment.service.domain.ports.output.repository;
 
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.Payment;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.Payment;
 
 import java.util.Optional;
 import java.util.UUID;

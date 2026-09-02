@@ -4,7 +4,7 @@ import com.thanaphat2005.food.ordering.system.domain.valueobject.CustomerId;
 import com.thanaphat2005.food.ordering.system.payment.service.dataacess.credithistory.entity.CreditHistoryEntity;
 import com.thanaphat2005.food.ordering.system.payment.service.dataacess.credithistory.mapper.CreditHistoryDataAccessMapper;
 import com.thanaphat2005.food.ordering.system.payment.service.dataacess.credithistory.repository.CreditHistoryJpaRepository;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.entity.CreditHistory;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.entity.CreditHistory;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.output.repository.CreditHistoryRepository;
 import org.springframework.stereotype.Component;
 
