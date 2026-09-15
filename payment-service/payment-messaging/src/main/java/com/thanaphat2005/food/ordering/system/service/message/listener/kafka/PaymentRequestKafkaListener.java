@@ -1,12 +1,11 @@
-package com.thanaphat2005.food.ordering.system.service.message.listener.kafka;
 
-import com.thanaphat2005.food.ordering.system.kafka.consumer.KafkaConsumer;
-import com.thanaphat2005.food.ordering.system.kafka.order.avro.model.PaymentOrderStatus;
-import com.thanaphat2005.food.ordering.system.kafka.order.avro.model.PaymentRequestAvroModel;
+import com.thanaphat2005.food.ordering.system.domain.event.payload.OrderPaymentEventPayload;
+import com.thanaphat2005.food.ordering.system.kafka.producer.KafkaMessageHelper;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.exception.PaymentApplicationServiceException;
-import com.thanaphat2005.food.ordering.system.restaurant.service.domain.exception.PaymentNotFoundException;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.input.PaymentRequestMessageListener;
-import com.thanaphat2005.food.ordering.system.service.message.mapper.PaymentMessageDataMapper;
+import com.thanaphat2005.food.ordering.system.restaurant.service.domain.exception.PaymentNotFoundException;
+import debezium.order.payment_outbox.Envelope;
+import debezium.order.payment_outbox.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PSQLState;
 import org.springframework.dao.DataAccessException;
@@ -17,59 +16,64 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
-import java.util.List;
 
-@Component
 @Slf4j
-public class PaymentRequestKafkaListener implements KafkaConsumer<PaymentRequestAvroModel> {
+@Component
+public class PaymentRequestKafkaListener implements KafkaSingleItemConsumer<Envelope> {
+
     private final PaymentRequestMessageListener paymentRequestMessageListener;
-    private final PaymentMessageDataMapper paymentMessagingDataMapper;
+    private final PaymentMessagingDataMapper paymentMessagingDataMapper;
+    private final KafkaMessageHelper kafkaMessageHelper;
 
     public PaymentRequestKafkaListener(PaymentRequestMessageListener paymentRequestMessageListener,
-                                       PaymentMessageDataMapper paymentMessagingDataMapper) {
+                                       PaymentMessagingDataMapper paymentMessagingDataMapper,
+                                       KafkaMessageHelper kafkaMessageHelper) {
         this.paymentRequestMessageListener = paymentRequestMessageListener;
         this.paymentMessagingDataMapper = paymentMessagingDataMapper;
+        this.kafkaMessageHelper = kafkaMessageHelper;
     }
 
     @Override
     @KafkaListener(id = "${kafka-consumer-config.payment-consumer-group-id}",
             topics = "${payment-service.payment-request-topic-name}")
-    public void receive(@Payload List<PaymentRequestAvroModel> messages,
-                        @Header(KafkaHeaders.RECEIVED_KEY) List<String> keys,
-                        @Header(KafkaHeaders.RECEIVED_PARTITION) List<Integer> partitions,
-                        @Header(KafkaHeaders.OFFSET) List<Long> offsets) {
-        log.info("{} number of payment requests received with keys:{}, partitions:{} and offsets: {}",
-                messages.size(),
-                keys.toString(),
-                partitions.toString(),
-                offsets.toString());
+    public void receive(@Payload Envelope message,
+                        @Header(KafkaHeaders.RECEIVED_KEY) String key,
+                        @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partition,
+                        @Header(KafkaHeaders.OFFSET) Long offset) {
 
-        messages.forEach(paymentRequestAvroModel -> {
+        if (message.getBefore() == null && DebeziumOp.CREATE.getValue().equals(message.getOp())) {
+            log.info("Incoming Message in PaymentRequestKafkaListener: {} with key: {}, partition: {} and offset: {} ",
+                    message, key, partition, offset);
+            Value paymentRequestAvroModel = message.getAfter();
+            OrderPaymentEventPayload orderPaymentEventPayload =
+                    kafkaMessageHelper.getOrderEventPayload(paymentRequestAvroModel.getPayload(), OrderPaymentEventPayload.class);
             try {
-                if (PaymentOrderStatus.PENDING == paymentRequestAvroModel.getPaymentOrderStatus()) {
-                    log.info("Processing payment for order id: {}", paymentRequestAvroModel.getOrderId());
+                if (PaymentOrderStatus.PENDING.name().equals(orderPaymentEventPayload.getPaymentOrderStatus())) {
+                    log.info("Processing payment for order id: {}", orderPaymentEventPayload.getOrderId());
                     paymentRequestMessageListener.completePayment(paymentMessagingDataMapper
-                            .paymentRequestAvroModelToPaymentRequest(paymentRequestAvroModel));
-                } else if(PaymentOrderStatus.CANCELLED == paymentRequestAvroModel.getPaymentOrderStatus()) {
-                    log.info("Cancelling payment for order id: {}", paymentRequestAvroModel.getOrderId());
+                            .paymentRequestAvroModelToPaymentRequest(orderPaymentEventPayload, paymentRequestAvroModel));
+                } else if (PaymentOrderStatus.CANCELLED.name().equals(orderPaymentEventPayload.getPaymentOrderStatus())) {
+                    log.info("Cancelling payment for order id: {}", orderPaymentEventPayload.getOrderId());
                     paymentRequestMessageListener.cancelPayment(paymentMessagingDataMapper
-                            .paymentRequestAvroModelToPaymentRequest(paymentRequestAvroModel));
+                            .paymentRequestAvroModelToPaymentRequest(orderPaymentEventPayload, paymentRequestAvroModel));
                 }
             } catch (DataAccessException e) {
                 SQLException sqlException = (SQLException) e.getRootCause();
                 if (sqlException != null && sqlException.getSQLState() != null &&
                         PSQLState.UNIQUE_VIOLATION.getState().equals(sqlException.getSQLState())) {
+                    //NO-OP for unique constraint exception
                     log.error("Caught unique constraint exception with sql state: {} " +
                                     "in PaymentRequestKafkaListener for order id: {}",
-                            sqlException.getSQLState(), paymentRequestAvroModel.getOrderId());
+                            sqlException.getSQLState(), orderPaymentEventPayload.getOrderId());
                 } else {
                     throw new PaymentApplicationServiceException("Throwing DataAccessException in" +
                             " PaymentRequestKafkaListener: " + e.getMessage(), e);
                 }
             } catch (PaymentNotFoundException e) {
-                log.error("No payment found for order id: {}", paymentRequestAvroModel.getOrderId());
+                //NO-OP for PaymentNotFoundException
+                log.error("No payment found for order id: {}", orderPaymentEventPayload.getOrderId());
             }
-        });
+        }
 
     }
 }
