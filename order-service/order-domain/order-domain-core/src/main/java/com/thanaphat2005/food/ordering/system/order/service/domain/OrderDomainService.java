@@ -5,7 +5,6 @@ import com.thanaphat2005.food.ordering.system.order.service.domain.entity.Restau
 import com.thanaphat2005.food.ordering.system.order.service.domain.event.OrderCancelledEvent;
 import com.thanaphat2005.food.ordering.system.order.service.domain.event.OrderCreatedEvent;
 import com.thanaphat2005.food.ordering.system.order.service.domain.event.OrderPaidEvent;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 

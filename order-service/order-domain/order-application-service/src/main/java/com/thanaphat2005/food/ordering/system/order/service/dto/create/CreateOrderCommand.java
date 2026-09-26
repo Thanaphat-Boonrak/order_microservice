@@ -1,6 +1,8 @@
 package com.thanaphat2005.food.ordering.system.order.service.dto.create;
 
 
+import com.thanaphat2005.food.ordering.system.domain.valueobject.OrderPreferences;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,9 +16,17 @@ import java.util.UUID;
 @Getter
 public class CreateOrderCommand  {
 
+    @NotNull
     private final UUID customerId;
+    @NotNull
     private final UUID restaurantId;
+    @NotNull
     private final BigDecimal price;
+    @NotNull
     private final List<OrderItem> items;
+    @NotNull
     private final OrderAddress address;
+
+
+    private final String orderNotes;
 }

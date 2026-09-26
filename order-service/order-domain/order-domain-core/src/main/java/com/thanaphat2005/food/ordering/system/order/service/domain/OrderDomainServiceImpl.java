@@ -18,7 +18,7 @@ import java.util.List;
 public class OrderDomainServiceImpl implements  OrderDomainService{
 
     @Override
-    public OrderCreatedEvent validateAndInitiateOrder(Order order, Restaurant restaurant) {
+    public OrderCreatedEvent validateAndInitiateOrder(Order order, Restaurant restaurant ) {
         validateRestaurant(restaurant);
         setOrderProductInformation(order,restaurant);
         order.validateOrder();
@@ -30,7 +30,7 @@ public class OrderDomainServiceImpl implements  OrderDomainService{
 
 
     @Override
-    public OrderPaidEvent payOrder(Order order) {
+    public OrderPaidEvent payOrder(Order order ) {
         order.pay();
         log.info("Order with id: {} is paid",order.getId().getValue());
         return new OrderPaidEvent(order,ZonedDateTime.now(ZoneId.of("UTC")));
@@ -51,7 +51,7 @@ public class OrderDomainServiceImpl implements  OrderDomainService{
 
     @Override
     public void cancelOrder(Order order, List<String> failureMessages) {
-        order.cancel();
+        order.cancel(failureMessages);
         log.info("Order with id: {} is cancel",order.getId().getValue());
 
     }

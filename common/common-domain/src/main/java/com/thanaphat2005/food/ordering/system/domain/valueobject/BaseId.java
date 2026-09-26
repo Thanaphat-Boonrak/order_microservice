@@ -1,11 +1,12 @@
 package com.thanaphat2005.food.ordering.system.domain.valueobject;
 
 import java.util.Objects;
-import java.util.UUID;
 
 public abstract class BaseId<T> {
 
     private final T value;
+
+
 
     protected BaseId(T value) {
         this.value = value;

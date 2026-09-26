@@ -1,12 +1,12 @@
 package com.thanaphat2005.food.ordering.system.order.service.domain.entity;
 
+import com.thanaphat2005.food.ordering.system.domain.entity.AggregateRoot;
+import com.thanaphat2005.food.ordering.system.domain.exception.DomainException;
+import com.thanaphat2005.food.ordering.system.domain.valueobject.*;
 import com.thanaphat2005.food.ordering.system.order.service.domain.exception.OrderDomainException;
 import com.thanaphat2005.food.ordering.system.order.service.domain.valueobject.OrderItemId;
 import com.thanaphat2005.food.ordering.system.order.service.domain.valueobject.StreetAddress;
 import com.thanaphat2005.food.ordering.system.order.service.domain.valueobject.TrackingId;
-import com.thanaphat2005.food.ordering.system.domain.entity.AggregateRoot;
-import com.thanaphat2005.food.ordering.system.domain.exception.DomainException;
-import com.thanaphat2005.food.ordering.system.domain.valueobject.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +21,10 @@ public class Order extends AggregateRoot<OrderId> {
     private TrackingId trackingId;
     private OrderStatus orderStatus;
     private List<String> failureMessages;
+    private OrderPreferences orderPreferences;
+
+    public static final String FAILURE_MESSAGE_DELIMITER = ",";
+
 
     private Order(Builder builder) {
         super.setId(builder.orderId);
@@ -32,6 +36,7 @@ public class Order extends AggregateRoot<OrderId> {
         trackingId = builder.trackingId;
         orderStatus = builder.orderStatus;
         failureMessages = builder.failureMessages;
+        orderPreferences = builder.orderPreferences;
     }
 
     public void initializeOrder(){
@@ -81,11 +86,16 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
 
-    public void cancel(){
+    public void cancel(List<String> failureMessages){
         if(!(orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.CANCELLING)){
             throw new DomainException("Order is not in correct state for cancelled operation");
         }
         orderStatus = OrderStatus.CANCELLED;
+        updateFailureMessage(failureMessages);
+    }
+
+    public void updateOrderPreferences(OrderPreferences orderPreferences){
+        this.orderPreferences = orderPreferences;
     }
 
 
@@ -171,7 +181,10 @@ public class Order extends AggregateRoot<OrderId> {
         return failureMessages;
     }
 
+    public OrderPreferences getOrderPreferences() {return orderPreferences;}
+
     public static final class Builder {
+        public OrderPreferences orderPreferences;
         private OrderId orderId;
         private CustomerId customerId;
         private RestaurantId restaurantId;
@@ -185,6 +198,11 @@ public class Order extends AggregateRoot<OrderId> {
         private Builder() {
         }
 
+
+        public Builder orderPreferences(OrderPreferences val) {
+            orderPreferences = val;
+            return this;
+        }
 
 
         public Builder orderId(OrderId val) {
