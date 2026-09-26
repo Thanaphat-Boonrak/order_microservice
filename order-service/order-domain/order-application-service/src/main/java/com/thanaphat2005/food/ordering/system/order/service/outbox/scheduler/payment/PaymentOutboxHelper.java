@@ -3,7 +3,7 @@ package com.thanaphat2005.food.ordering.system.order.service.outbox.scheduler.pa
 
 import com.thanaphat2005.food.ordering.system.domain.valueobject.OrderStatus;
 import com.thanaphat2005.food.ordering.system.order.service.domain.exception.OrderDomainException;
-import com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment.OrderPaymentEventPayload;
+import com.thanaphat2005.food.ordering.system.domain.event.payload.OrderPaymentEventPayload;
 import com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment.OrderPaymentOutboxMessage;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.repository.PaymentOutboxRepository;
 import com.thanaphat2005.food.ordering.system.outbox.OutboxStatus;

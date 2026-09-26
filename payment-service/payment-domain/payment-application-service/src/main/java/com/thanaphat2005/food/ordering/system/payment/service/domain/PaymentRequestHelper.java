@@ -13,7 +13,6 @@ import com.thanaphat2005.food.ordering.system.payment.service.domain.exception.P
 import com.thanaphat2005.food.ordering.system.payment.service.domain.mapper.PaymentDataMapper;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.outbox.model.OrderOutboxMessage;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.outbox.scheduler.OrderOutboxHelper;
-import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.output.message.publisher.PaymentResponseMessagePublisher;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.output.repository.CreditEntryRepository;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.output.repository.CreditHistoryRepository;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.output.repository.PaymentRepository;
@@ -36,28 +35,26 @@ public class PaymentRequestHelper {
     private final CreditEntryRepository creditEntryRepository;
     private final CreditHistoryRepository creditHistoryRepository;
     private final OrderOutboxHelper orderOutboxHelper;
-    private final PaymentResponseMessagePublisher paymentResponseMessagePublisher;
 
 
     public PaymentRequestHelper(PaymentDomainService paymentDomainService,
                                 PaymentDataMapper paymentDataMapper,
                                 PaymentRepository paymentRepository,
                                 CreditEntryRepository creditEntryRepository,
-                                CreditHistoryRepository creditHistoryRepository, OrderOutboxHelper orderOutboxHelper, PaymentResponseMessagePublisher paymentResponseMessagePublisher) {
+                                CreditHistoryRepository creditHistoryRepository, OrderOutboxHelper orderOutboxHelper) {
         this.paymentDomainService = paymentDomainService;
         this.paymentDataMapper = paymentDataMapper;
         this.paymentRepository = paymentRepository;
         this.creditEntryRepository = creditEntryRepository;
         this.creditHistoryRepository = creditHistoryRepository;
         this.orderOutboxHelper = orderOutboxHelper;
-        this.paymentResponseMessagePublisher = paymentResponseMessagePublisher;
     }
 
     @Transactional
     public void persistPayment(PaymentRequest paymentRequest) {
         log.info("Received payment complete event for order id: {}", paymentRequest.getOrderId());
 
-        if (publishIfOutboxMessageProcessedForPayment(paymentRequest, PaymentStatus.COMPLETED)) {
+        if (isOutboxMessageProcessedForPayment(paymentRequest, PaymentStatus.COMPLETED)) {
             log.info("An outbox message has been sent for order id: {}", paymentRequest.getOrderId());
             return;
         }
@@ -72,6 +69,7 @@ public class PaymentRequestHelper {
                 paymentEvent.getPayment().getPaymentStatus(),
                 OutboxStatus.STARTED,
                 UUID.fromString(paymentRequest.getSagaId()));
+        log.info("Payment complete for order id: {}", paymentRequest.getOrderId());
 
     }
 
@@ -79,7 +77,7 @@ public class PaymentRequestHelper {
     public void persistCancelPayment(PaymentRequest paymentRequest) {
         log.info("Received payment rollback event for order id: {}", paymentRequest.getOrderId());
 
-        if (publishIfOutboxMessageProcessedForPayment(paymentRequest, PaymentStatus.COMPLETED)) {
+        if (isOutboxMessageProcessedForPayment(paymentRequest, PaymentStatus.CANCELLED)) {
             log.info("An outbox message has been already save in db : {}", paymentRequest.getOrderId());
             return;
         }
@@ -134,14 +132,13 @@ public class PaymentRequestHelper {
         }
     }
 
-    private boolean publishIfOutboxMessageProcessedForPayment(PaymentRequest paymentRequest,
+    private boolean isOutboxMessageProcessedForPayment(PaymentRequest paymentRequest,
                                                               PaymentStatus paymentStatus) {
         Optional<OrderOutboxMessage> orderOutboxMessage =
                 orderOutboxHelper.getCompletedOrderOutboxMessageBySagaIdAndPaymentStatus(
                         UUID.fromString(paymentRequest.getSagaId()),
                         paymentStatus);
         if (orderOutboxMessage.isPresent()) {
-            paymentResponseMessagePublisher.publish(orderOutboxMessage.get(), orderOutboxHelper::updateOutboxMessage);
             return true;
         }
         return false;

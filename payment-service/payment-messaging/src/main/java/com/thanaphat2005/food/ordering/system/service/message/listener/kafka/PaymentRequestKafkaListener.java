@@ -1,13 +1,19 @@
+package com.thanaphat2005.food.ordering.system.service.message.listener.kafka;
 
 import com.thanaphat2005.food.ordering.system.domain.event.payload.OrderPaymentEventPayload;
+import com.thanaphat2005.food.ordering.system.domain.valueobject.PaymentOrderStatus;
+import com.thanaphat2005.food.ordering.system.kafka.consumer.KafkaSingleItemConsumer;
 import com.thanaphat2005.food.ordering.system.kafka.producer.KafkaMessageHelper;
+import com.thanaphat2005.food.ordering.system.messaging.DebeziumOp;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.exception.PaymentApplicationServiceException;
 import com.thanaphat2005.food.ordering.system.payment.service.domain.ports.input.PaymentRequestMessageListener;
 import com.thanaphat2005.food.ordering.system.restaurant.service.domain.exception.PaymentNotFoundException;
+import com.thanaphat2005.food.ordering.system.service.message.mapper.PaymentMessageDataMapper;
 import debezium.order.payment_outbox.Envelope;
 import debezium.order.payment_outbox.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PSQLState;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -22,11 +28,11 @@ import java.sql.SQLException;
 public class PaymentRequestKafkaListener implements KafkaSingleItemConsumer<Envelope> {
 
     private final PaymentRequestMessageListener paymentRequestMessageListener;
-    private final PaymentMessagingDataMapper paymentMessagingDataMapper;
+    private final PaymentMessageDataMapper paymentMessagingDataMapper;
     private final KafkaMessageHelper kafkaMessageHelper;
 
     public PaymentRequestKafkaListener(PaymentRequestMessageListener paymentRequestMessageListener,
-                                       PaymentMessagingDataMapper paymentMessagingDataMapper,
+                                       PaymentMessageDataMapper paymentMessagingDataMapper,
                                        KafkaMessageHelper kafkaMessageHelper) {
         this.paymentRequestMessageListener = paymentRequestMessageListener;
         this.paymentMessagingDataMapper = paymentMessagingDataMapper;
@@ -34,17 +40,13 @@ public class PaymentRequestKafkaListener implements KafkaSingleItemConsumer<Enve
     }
 
     @Override
-    @KafkaListener(id = "${kafka-consumer-config.payment-consumer-group-id}",
-            topics = "${payment-service.payment-request-topic-name}")
-    public void receive(@Payload Envelope message,
-                        @Header(KafkaHeaders.RECEIVED_KEY) String key,
-                        @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partition,
-                        @Header(KafkaHeaders.OFFSET) Long offset) {
-
-        if (message.getBefore() == null && DebeziumOp.CREATE.getValue().equals(message.getOp())) {
-            log.info("Incoming Message in PaymentRequestKafkaListener: {} with key: {}, partition: {} and offset: {} ",
-                    message, key, partition, offset);
-            Value paymentRequestAvroModel = message.getAfter();
+    @KafkaListener(id = "${kafka-consumer-config.payment-consumer-group-id}", topics = "${payment-service.payment-request-topic-name}")
+    public void receive(@Payload Envelope messages, @Header(KafkaHeaders.RECEIVED_KEY) String key, @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partitions, @Header(KafkaHeaders.OFFSET) Long offsets) {
+        log.info("Receive payment request message for key: {}", key);
+        if (messages.getBefore() == null && DebeziumOp.CREATE.getOp().equals(messages.getOp())) {
+            log.info("Incoming Message in com.thanaphat2005.food.ordering.system.service.message.listener.kafka.PaymentRequestKafkaListener: {} with key: {}, partition: {} and offset: {} ",
+                    messages, key, partitions, offsets);
+            Value paymentRequestAvroModel = messages.getAfter();
             OrderPaymentEventPayload orderPaymentEventPayload =
                     kafkaMessageHelper.getOrderEventPayload(paymentRequestAvroModel.getPayload(), OrderPaymentEventPayload.class);
             try {
@@ -58,22 +60,20 @@ public class PaymentRequestKafkaListener implements KafkaSingleItemConsumer<Enve
                             .paymentRequestAvroModelToPaymentRequest(orderPaymentEventPayload, paymentRequestAvroModel));
                 }
             } catch (DataAccessException e) {
-                SQLException sqlException = (SQLException) e.getRootCause();
-                if (sqlException != null && sqlException.getSQLState() != null &&
+                Throwable rootCause = NestedExceptionUtils.getRootCause(e);
+                if (rootCause instanceof SQLException sqlException &&
+                        sqlException.getSQLState() != null &&
                         PSQLState.UNIQUE_VIOLATION.getState().equals(sqlException.getSQLState())) {
-                    //NO-OP for unique constraint exception
                     log.error("Caught unique constraint exception with sql state: {} " +
-                                    "in PaymentRequestKafkaListener for order id: {}",
+                                    "in com.thanaphat2005.food.ordering.system.service.message.listener.kafka.PaymentRequestKafkaListener for order id: {}",
                             sqlException.getSQLState(), orderPaymentEventPayload.getOrderId());
                 } else {
                     throw new PaymentApplicationServiceException("Throwing DataAccessException in" +
-                            " PaymentRequestKafkaListener: " + e.getMessage(), e);
+                            " com.thanaphat2005.food.ordering.system.service.message.listener.kafka.PaymentRequestKafkaListener: " + e.getMessage(), e);
                 }
             } catch (PaymentNotFoundException e) {
-                //NO-OP for PaymentNotFoundException
                 log.error("No payment found for order id: {}", orderPaymentEventPayload.getOrderId());
             }
         }
-
     }
 }

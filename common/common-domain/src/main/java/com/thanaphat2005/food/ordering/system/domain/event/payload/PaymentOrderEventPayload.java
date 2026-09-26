@@ -1,4 +1,4 @@
-package com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment;
+package com.thanaphat2005.food.ordering.system.domain.event.payload;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -15,9 +15,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentOrderEventPayload {
-
-
-
 
     @JsonProperty
     private String paymentId;

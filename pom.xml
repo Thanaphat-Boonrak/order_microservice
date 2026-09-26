@@ -23,6 +23,7 @@
         <module>customer-service</module>
         <module>payment-service</module>
         <module>restaurant-service</module>
+        <module>common/common-messaging</module>
     </modules>
 
     <properties>
@@ -40,6 +41,11 @@
             <dependency>
                 <groupId>com.thanaphat2005.food.ordering.system</groupId>
                 <artifactId>saga</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.thanaphat2005.food.ordering.system</groupId>
+                <artifactId>common-messaging</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

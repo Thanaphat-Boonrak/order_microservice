@@ -11,9 +11,9 @@ import com.thanaphat2005.food.ordering.system.order.service.dto.create.CreateOrd
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.OrderAddress;
 import com.thanaphat2005.food.ordering.system.order.service.dto.message.CustomerModel;
 import com.thanaphat2005.food.ordering.system.order.service.dto.track.TrackOrderResponse;
-import com.thanaphat2005.food.ordering.system.order.service.outbox.model.approval.OrderApprovalEventPayload;
-import com.thanaphat2005.food.ordering.system.order.service.outbox.model.approval.OrderApprovalEventProduct;
-import com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment.OrderPaymentEventPayload;
+import com.thanaphat2005.food.ordering.system.domain.event.payload.OrderApprovalEventPayload;
+import com.thanaphat2005.food.ordering.system.domain.event.payload.OrderApprovalEventProduct;
+import com.thanaphat2005.food.ordering.system.domain.event.payload.OrderPaymentEventPayload;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

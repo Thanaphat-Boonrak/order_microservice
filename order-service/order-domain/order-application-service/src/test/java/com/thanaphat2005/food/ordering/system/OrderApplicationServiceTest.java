@@ -12,7 +12,7 @@ import com.thanaphat2005.food.ordering.system.order.service.dto.create.CreateOrd
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.OrderAddress;
 import com.thanaphat2005.food.ordering.system.order.service.dto.create.OrderItem;
 import com.thanaphat2005.food.ordering.system.order.service.mapper.OrderDataMapper;
-import com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment.OrderPaymentEventPayload;
+import com.thanaphat2005.food.ordering.system.domain.event.payload.OrderPaymentEventPayload;
 import com.thanaphat2005.food.ordering.system.order.service.outbox.model.payment.OrderPaymentOutboxMessage;
 import com.thanaphat2005.food.ordering.system.order.service.ports.input.service.OrderApplicationService;
 import com.thanaphat2005.food.ordering.system.order.service.ports.output.ai.order.noteinterpreter.OrderNoteInterpreter;

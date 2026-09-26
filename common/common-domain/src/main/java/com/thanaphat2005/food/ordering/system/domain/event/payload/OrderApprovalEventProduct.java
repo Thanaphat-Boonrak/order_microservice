@@ -1,4 +1,4 @@
-package com.thanaphat2005.food.ordering.system.order.service.outbox.model.approval;
+package com.thanaphat2005.food.ordering.system.domain.event.payload;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
